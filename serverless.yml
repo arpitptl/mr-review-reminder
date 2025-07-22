@@ -7,28 +7,13 @@ provider:
   timeout: 300  # 5 minutes timeout
   memorySize: 256  # MB
   
-  # Environment variables (override these per deployment)
+  # Environment variables (only global config, all team/project/slack config is in projects_config.yaml)
   environment:
     GITLAB_URL: ${env:GITLAB_URL, 'https://gitlab.com'}
-    GITLAB_TOKEN: ${env:GITLAB_TOKEN, ''}
-    GITLAB_PROJECT_ID: ${env:GITLAB_PROJECT_ID, ''}
-    GITLAB_PROJECT_NAME: ${env:GITLAB_PROJECT_NAME, ''}
-    GITLAB_PROJECTS: ${env:GITLAB_PROJECTS}
     JIRA_URL: ${env:JIRA_URL}
     JIRA_USERNAME: ${env:JIRA_USERNAME}
     JIRA_TOKEN: ${env:JIRA_TOKEN}
-    SLACK_WEBHOOK_URL: ${env:SLACK_WEBHOOK_URL}
-    STALE_DAYS_THRESHOLD: ${env:STALE_DAYS_THRESHOLD, '2'}
-    USE_PRIORITY_THRESHOLDS: ${env:USE_PRIORITY_THRESHOLDS, 'true'}
-    THRESHOLD_HIGHEST: ${env:THRESHOLD_HIGHEST, '1'}
-    THRESHOLD_HIGH: ${env:THRESHOLD_HIGH, '2'}
-    THRESHOLD_MEDIUM: ${env:THRESHOLD_MEDIUM, '3'}
-    THRESHOLD_LOW: ${env:THRESHOLD_LOW, '3'}
-    THRESHOLD_LOWEST: ${env:THRESHOLD_LOWEST, '3'}
-    EXCLUDE_BOTS: ${env:EXCLUDE_BOTS, 'true'}
-    EXCLUDE_DEPENDENCIES: ${env:EXCLUDE_DEPENDENCIES, 'true'}
-    CUSTOM_BOT_KEYWORDS: ${env:CUSTOM_BOT_KEYWORDS, ''}
-    CUSTOM_DEPENDENCY_KEYWORDS: ${env:CUSTOM_DEPENDENCY_KEYWORDS, ''}
+    # All team/project/slack config is now in projects_config.yaml
 
   # IAM permissions
   iam:
@@ -45,6 +30,9 @@ functions:
   staleMrReminder:
     handler: lambda_function.lambda_handler
     description: "Daily reminder for stale merge requests"
+    package:
+      include:
+        - projects_config.yaml  # Ensure this is included in the deployment package
     events:
       # Run every day at 4:30 PM IST (11:00 AM UTC)
       - schedule: 
@@ -60,3 +48,5 @@ custom:
     dockerizePip: true
     slim: true
     strip: false
+
+# Onboarding new teams: just edit projects_config.yaml and redeploy!

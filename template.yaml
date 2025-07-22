@@ -1,15 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Stale MR Reminder Lambda Function
+Description: Stale MR Reminder Lambda Function (Multi-Team YAML Config)
 
 Parameters:
-  GitLabToken:
-    Type: String
-    NoEcho: true
-    Description: GitLab Personal Access Token
-  GitLabProjectId:
-    Type: String
-    Description: GitLab Project ID
   JiraUrl:
     Type: String
     Description: JIRA Base URL
@@ -20,17 +13,13 @@ Parameters:
     Type: String
     NoEcho: true
     Description: JIRA API Token
-  SlackWebhookUrl:
-    Type: String
-    NoEcho: true
-    Description: Slack Webhook URL
 
 Resources:
   StaleMrReminderFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: stale-mr-reminder
-      CodeUri: ./
+      CodeUri: ./  # Includes all files in the root directory, including projects_config.yaml
       Handler: lambda_function.lambda_handler
       Runtime: python3.9
       Timeout: 300
@@ -38,21 +27,10 @@ Resources:
       Description: Daily reminder for stale merge requests
       Environment:
         Variables:
-          GITLAB_TOKEN: !Ref GitLabToken
-          GITLAB_PROJECT_ID: !Ref GitLabProjectId
           JIRA_URL: !Ref JiraUrl
           JIRA_USERNAME: !Ref JiraUsername
           JIRA_TOKEN: !Ref JiraToken
-          SLACK_WEBHOOK_URL: !Ref SlackWebhookUrl
-          STALE_DAYS_THRESHOLD: '2'
-          USE_PRIORITY_THRESHOLDS: 'true'
-          THRESHOLD_HIGHEST: '1'
-          THRESHOLD_HIGH: '2'
-          THRESHOLD_MEDIUM: '3'
-          THRESHOLD_LOW: '3'
-          THRESHOLD_LOWEST: '3'
-          EXCLUDE_BOTS: 'true'
-          EXCLUDE_DEPENDENCIES: 'true'
+          # All team/project/slack config is now in projects_config.yaml
       Events:
         DailySchedule:
           Type: Schedule
@@ -60,6 +38,7 @@ Resources:
             Schedule: cron(30 11 * * ? *)  # 5 PM IST daily
             Description: Daily execution at 5 PM IST
             Enabled: true
+      # Onboarding new teams: just edit projects_config.yaml and redeploy!
 
   StaleMrReminderLogGroup:
     Type: AWS::Logs::LogGroup
