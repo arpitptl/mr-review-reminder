@@ -2,7 +2,6 @@
 
 **Automated daily Slack notifications for merge requests that need attention. Reduce review delays, improve code quality, and boost team productivity.**
 
-
 ---
 
 ## 🎯 **Problem & Solution**
@@ -84,9 +83,16 @@ chmod +x deploy.sh
 ```
 
 ### **2️⃣ Configure** (5 minutes)
+- Copy the example config:
 ```bash
-cp .env.example .env
-# Edit .env with your GitLab, JIRA, and Slack credentials
+cp projects_config.example.yaml projects_config.yaml
+```
+- Edit `projects_config.yaml` to add your teams, projects, and Slack webhooks. See the example and onboarding section below.
+- Set your JIRA credentials in your environment (or .env file):
+```bash
+export JIRA_URL=https://yourcompany.atlassian.net
+export JIRA_USERNAME=your.email@company.com
+export JIRA_TOKEN=your-jira-api-token
 ```
 
 ### **3️⃣ Deploy** (1 minute)
@@ -99,36 +105,54 @@ cp .env.example .env
 
 ---
 
-## 📋 **Configuration**
+## 📋 **YAML Configuration (projects_config.yaml)**
 
-### **Basic Setup**
-```bash
-# GitLab
-GITLAB_TOKEN=glpat-your-token
-GITLAB_PROJECTS=123:Frontend,456:Backend,789:Mobile
+- All team/project/slack/threshold config is in a single YAML file.
+- Each team can have multiple projects, each with its own GitLab token.
+- Each team can have its own Slack channel (webhook).
 
-# JIRA  
-JIRA_URL=https://yourcompany.atlassian.net
-JIRA_USERNAME=your.email@company.com
-JIRA_TOKEN=your-jira-api-token
+**Example:**
+```yaml
+TEAM_NAME_1:
+  slack_webhook_url: "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+  threshold_config:
+    stale_days_threshold: 2
+    use_priority_thresholds: true
+    threshold_highest: 1
+    threshold_high: 2
+    threshold_medium: 3
+    threshold_low: 3
+    threshold_lowest: 3
+  gitlab_projects:
+    ProjectAlpha:
+      gitlab_project_id: "12345678"
+      gitlab_token: "glpat-xxxxxxxxxxxxxxxxxxxx"
+    ProjectBeta:
+      gitlab_project_id: "87654321"
+      gitlab_token: "glpat-yyyyyyyyyyyyyyyyyyyy"
 
-# Slack
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+TEAM_NAME_2:
+  slack_webhook_url: "https://hooks.slack.com/services/AAA/BBB/CCC"
+  threshold_config:
+    stale_days_threshold: 2
+    use_priority_thresholds: true
+    threshold_highest: 1
+    threshold_high: 2
+    threshold_medium: 3
+    threshold_low: 3
+    threshold_lowest: 3
+  gitlab_projects:
+    ProjectGamma:
+      gitlab_project_id: "11223344"
+      gitlab_token: "glpat-zzzzzzzzzzzzzzzzzzzz"
 ```
 
-### **Advanced: Per-Project Tokens**
-```bash
-# Different tokens for different projects
-GITLAB_PROJECTS=123:Frontend:glpat-frontend-token,456:Backend:glpat-backend-token
-```
-
-### **Priority-Based Thresholds**
-```bash
-# Customize thresholds by JIRA priority
-THRESHOLD_HIGHEST=1    # Critical issues: 1 day
-THRESHOLD_HIGH=2       # High priority: 2 days  
-THRESHOLD_MEDIUM=3     # Normal: 3 days
-```
+**To onboard a new team:**
+1. Copy a team block, change the team name, webhook, and thresholds as needed.
+2. Add all GitLab projects for the team under `gitlab_projects`.
+3. Use real GitLab project IDs and tokens for each project.
+4. Use the team's Slack webhook URL.
+5. Save and redeploy/restart the bot.
 
 ---
 
@@ -140,7 +164,7 @@ THRESHOLD_MEDIUM=3     # Normal: 3 days
 ```
 🔔 Daily Review Reminder - 3 merge requests need attention across 2 projects
 
-🏰 Frontend - 2 MRs
+🏰 ProjectAlpha - 2 MRs
     🔴 Fix user authentication bug
     ⏰ Age: 4 days old (threshold: 2 days)
     🎫 JIRA: AUTH-1234 (In Progress) 🔥 Highest
@@ -152,7 +176,7 @@ THRESHOLD_MEDIUM=3     # Normal: 3 days
     👤 Assignees: @alex
     ✍️ Author: @maria
 
-🦉 Backend - 1 MR
+🦉 ProjectBeta - 1 MR
     🟡 Optimize database queries
     ⏰ Age: 2 days old (threshold: 2 days)
     🎫 JIRA: PERF-567 (To Do) ⚡ High
@@ -221,7 +245,6 @@ We welcome contributions! Here's how to get started:
 - 🔔 **Notification channels**: Email, Microsoft Teams, Discord
 - 🧠 **Smart features**: ML-based priority prediction, reviewer suggestions
 ---
-
 
 ## 📄 **License**
 

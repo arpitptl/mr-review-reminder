@@ -8,7 +8,7 @@ __pycache__/
 env/
 venv/
 .venv/
-
+projects_config.yaml
 # Build outputs
 .serverless/
 dist/

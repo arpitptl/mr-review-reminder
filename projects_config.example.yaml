@@ -1,0 +1,42 @@
+# Example configuration for Stale MR Reminder Bot
+# Supports multiple teams, each with multiple projects, each project with its own GitLab token
+# Each team can have its own Slack channel (webhook)
+
+TEAM_NAME_1:
+  slack_webhook_url: "https://hooks.slack.com/services/XXX/YYY/ZZZ"  # Slack webhook for this team
+  threshold_config:
+    stale_days_threshold: 2
+    use_priority_thresholds: true
+    threshold_highest: 1
+    threshold_high: 2
+    threshold_medium: 3
+    threshold_low: 3
+    threshold_lowest: 3
+  gitlab_projects:
+    ProjectAlpha:
+      gitlab_project_id: "12345678"
+      gitlab_token: "glpat-xxxxxxxxxxxxxxxxxxxx"
+    ProjectBeta:
+      gitlab_project_id: "87654321"
+      gitlab_token: "glpat-yyyyyyyyyyyyyyyyyyyy"
+
+TEAM_NAME_2:
+  slack_webhook_url: "https://hooks.slack.com/services/AAA/BBB/CCC"  # Slack webhook for another team
+  threshold_config:
+    stale_days_threshold: 2
+    use_priority_thresholds: true
+    threshold_highest: 1
+    threshold_high: 2
+    threshold_medium: 3
+    threshold_low: 3
+    threshold_lowest: 3
+  gitlab_projects:
+    ProjectGamma:
+      gitlab_project_id: "11223344"
+      gitlab_token: "glpat-zzzzzzzzzzzzzzzzzzzz"
+
+# To onboard a new team:
+# 1. Copy the TEAM_NAME_X block, change the team name, webhook, and thresholds as needed.
+# 2. Add all GitLab projects for the team under gitlab_projects.
+# 3. Use real GitLab project IDs and tokens for each project.
+# 4. Use the team's Slack webhook URL. 
