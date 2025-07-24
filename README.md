@@ -69,6 +69,7 @@
 - **Rich formatting** with emojis and structured blocks
 - **Direct links** to MRs and JIRA tickets
 - **Team context**: Shows reviewers, assignees, and authors
+- **@Mentions**: Reviewers, authors, and assignees are now tagged via Slack @mentions
 - **Summary statistics**: Age distribution and project overview
 
 ---

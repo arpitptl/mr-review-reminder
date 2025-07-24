@@ -27,6 +27,25 @@ def load_projects_config(config_path: str = "projects_config.yaml") -> dict:
         return yaml.safe_load(f)
 
 
+def slack_mention(gitlab_username, mapping):
+    slack_id = mapping.get(gitlab_username)
+    if slack_id:
+        return f"<@{slack_id}>"
+    return gitlab_username
+
+
+def get_author_username(author):
+    if isinstance(author, dict):
+        return author.get('username') or author.get('name') or str(author)
+    return str(author)
+
+
+def get_username(user):
+    if isinstance(user, dict):
+        return user.get('username') or user.get('name') or str(user)
+    return str(user)
+
+
 class TeamConfig:
     """Holds per-team config loaded from YAML."""
     def __init__(self, name: str, data: dict):
@@ -182,8 +201,9 @@ class TeamMRAnalyzer:
 class SlackNotifier:
     """Slack notification handler"""
     
-    def __init__(self, webhook_url: str):
+    def __init__(self, webhook_url: str, gitlab_to_slack: dict = None):
         self.webhook_url = webhook_url
+        self.gitlab_to_slack = gitlab_to_slack or {}
     
     def format_mr_message(self, mrs: List[Dict]) -> Dict:
         """Format stale MRs into a beautiful Slack message (backward compatibility)"""
@@ -233,11 +253,11 @@ class SlackNotifier:
             # Create assignee/reviewer text
             people_text = ""
             if mr['reviewers']:
-                people_text += f"👀 *Reviewers:* {', '.join(mr['reviewers'])}\n"
+                people_text += f"👀 *Reviewers:* {', '.join(slack_mention(get_username(r), self.gitlab_to_slack) for r in mr.get('reviewers', []))}\n"
             if mr['assignees']:
-                people_text += f"👤 *Assignees:* {', '.join(mr['assignees'])}\n"
+                people_text += f"👤 *Assignees:* {', '.join(slack_mention(get_username(a), self.gitlab_to_slack) for a in mr.get('assignees', []))}\n"
             
-            people_text += f"✍️ *Author:* {mr['author']}"
+            people_text += f"✍️ *Author:* {slack_mention(get_username(mr['author']), self.gitlab_to_slack)}"
             
             # JIRA info with priority
             jira_text = ""
@@ -362,11 +382,11 @@ class SlackNotifier:
                 # Create assignee/reviewer text
                 people_text = ""
                 if mr['reviewers']:
-                    people_text += f"👀 *Reviewers:* {', '.join(mr['reviewers'])}\n"
+                    people_text += f"👀 *Reviewers:* {', '.join(slack_mention(get_username(r), self.gitlab_to_slack) for r in mr.get('reviewers', []))}\n"
                 if mr['assignees']:
-                    people_text += f"👤 *Assignees:* {', '.join(mr['assignees'])}\n"
+                    people_text += f"👤 *Assignees:* {', '.join(slack_mention(get_username(a), self.gitlab_to_slack) for a in mr.get('assignees', []))}\n"
                 
-                people_text += f"✍️ *Author:* {mr['author']}"
+                people_text += f"✍️ *Author:* {slack_mention(get_username(mr['author']), self.gitlab_to_slack)}"
                 
                 # JIRA info with priority
                 jira_text = ""
@@ -494,11 +514,11 @@ class SlackNotifier:
             # Create assignee/reviewer text
             people_text = ""
             if mr['reviewers']:
-                people_text += f"👀 *Reviewers:* {', '.join(mr['reviewers'])}\n"
+                people_text += f"👀 *Reviewers:* {', '.join(slack_mention(get_username(r), self.gitlab_to_slack) for r in mr.get('reviewers', []))}\n"
             if mr['assignees']:
-                people_text += f"👤 *Assignees:* {', '.join(mr['assignees'])}\n"
+                people_text += f"👤 *Assignees:* {', '.join(slack_mention(get_username(a), self.gitlab_to_slack) for a in mr.get('assignees', []))}\n"
             
-            people_text += f"✍️ *Author:* {mr['author']}"
+            people_text += f"✍️ *Author:* {slack_mention(get_username(mr['author']), self.gitlab_to_slack)}"
             
             # JIRA info with priority
             jira_text = ""
@@ -629,6 +649,9 @@ def main():
         jira_client = SimpleJiraClient(jira_url, jira_username, jira_token)
         # Load team/project config
         teams_data = load_projects_config()
+        gitlab_to_slack = teams_data.get('gitlab_to_slack', {})
+        # Remove mapping from teams_data so it doesn't interfere with team configs
+        teams_data = {k: v for k, v in teams_data.items() if k != 'gitlab_to_slack'}
         for team_name, team_data in teams_data.items():
             logger.info(f"Processing team: {team_name}")
             team_config = TeamConfig(team_name, team_data)
@@ -642,7 +665,7 @@ def main():
             for mr in stale_mrs:
                 pname = mr['project_name']
                 mrs_by_project.setdefault(pname, []).append(mr)
-            notifier = SlackNotifier(team_config.slack_webhook_url)
+            notifier = SlackNotifier(team_config.slack_webhook_url, gitlab_to_slack)
             message = notifier.format_multi_project_message(mrs_by_project)
             success = notifier.send_notification(message)
             if success:
